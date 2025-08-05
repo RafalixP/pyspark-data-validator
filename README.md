@@ -14,6 +14,20 @@ Nauka:
 - Optymalizacji wydajności big data
 - Implementacji CI/CD dla jakości danych
 
+## 👥 Who is this for?
+
+- **Data Engineers** learning PySpark data validation
+- **QA Engineers** transitioning to big data testing
+- **Data Scientists** needing data quality checks
+- **Students** exploring distributed data processing
+
+## Prerequisites
+
+- Python 3.8+
+- Basic understanding of pandas
+- Familiarity with data quality concepts
+- (Optional) Spark cluster for distributed testing
+
 ## Struktura projektu
 
 ```
@@ -90,13 +104,13 @@ print(f"Poprawne emaile: {email_result['validation_rate']}%")
 validator.close()
 ```
 
-## Scenariusze testowe dla rozmowy
+## Use Cases
 
-1. **Big Data Processing**: Jak obsłużyć DataFrame z milionami rekordów?
-2. **Performance Tuning**: Optymalizacja zapytań i partycjonowania
-3. **Data Quality Pipelines**: Automatyzacja walidacji w CI/CD
-4. **Schema Evolution**: Obsługa zmian w schemacie danych
-5. **Anomaly Detection**: Wykrywanie nietypowych wzorców w danych
+1. **Big Data Processing**: Handling DataFrames with millions of records
+2. **Performance Tuning**: Query and partitioning optimization
+3. **Data Quality Pipelines**: Automated validation in CI/CD
+4. **Schema Evolution**: Managing data schema changes
+5. **Anomaly Detection**: Identifying unusual patterns in data
 
 ## Kluczowe różnice PySpark vs Pandas
 
@@ -110,11 +124,11 @@ validator.close()
 
 ## 🤝 Contributing
 
-Chętnie przyjmę pull requesty! Szczególnie mile widziane:
-- Nowe funkcje walidacyjne
-- Optymalizacje wydajności
-- Dodatkowe testy
-- Przykłady integracji z Azure/AWS
+Pull requests are welcome! Areas of interest:
+- New validation functions
+- Performance optimizations
+- Additional test cases
+- Cloud platform integrations (Azure/AWS/GCP)
 
 ## 📧 Kontakt
 
