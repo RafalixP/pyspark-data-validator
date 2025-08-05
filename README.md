@@ -8,7 +8,7 @@ Projekt demonstrujący walidację jakości danych w PySpark - od podstawowych fu
 
 ## 🎯 Cel projektu
 
-Przygotowanie do pozycji **Test Engineer – Data & AI** poprzez praktyczną naukę:
+Nauka:
 - Przepisywania funkcji pandas na PySpark
 - Testowania pipeline'ów danych
 - Optymalizacji wydajności big data
