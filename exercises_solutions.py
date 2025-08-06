@@ -37,6 +37,22 @@ class PySparkExercises:
         
         self.employees_df = self.spark.table("employees")
     
+    def exercise_0(self):
+        """0. Wszyscy pracownicy"""
+        print("=== Wszyscy pracownicy ===\n")
+        
+       
+        
+        print("Twoje rozwiązanie SQL:")
+        sql_result = self.spark.sql("SELECT * FROM employees")
+        sql_result.show()
+        
+        print("\nTwoje rozwiązanie DataFrame API:")
+        df_result = self.employees_df.select('name', 'department', 'salary', 'hire_date')
+        df_result.show()
+        
+        pass
+
     def exercise_1(self):
         """1. Znajdź pracowników zatrudnionych w 2020 roku"""
         print("=== ĆWICZENIE 1: Pracownicy zatrudnieni w 2020 roku ===\n")
@@ -45,12 +61,12 @@ class PySparkExercises:
         # Wskazówka: użyj year(col('hire_date')) == 2020
         
         print("Twoje rozwiązanie SQL:")
-        # sql_result = self.spark.sql("SELECT ...")
-        # sql_result.show()
+        sql_result = self.spark.sql("SELECT * FROM employees WHERE hire_date BETWEEN '2020-01-01' AND '2020-12-31'")
+        sql_result.show()
         
         print("\nTwoje rozwiązanie DataFrame API:")
-        # df_result = self.employees_df.filter(...)
-        # df_result.show()
+        df_result = self.employees_df.select('name', 'department', 'salary', 'hire_date').filter((col('hire_date') >= '2020-01-01') & (col('hire_date') <= '2020-12-31'))
+        df_result.show()
         
         pass
     
@@ -61,6 +77,10 @@ class PySparkExercises:
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: użyj percentile_approx(col('salary'), 0.5)
         
+        print("\nTwoje rozwiązanie DataFrame API:")
+        df_result = self.employees_df.groupBy('department').agg(percentile_approx(col('salary'), 0.5).alias('median_salary'))
+        df_result.show()
+
         pass
     
     def exercise_3(self):
@@ -70,6 +90,12 @@ class PySparkExercises:
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: groupBy + agg + orderBy + limit(1)
         
+        print("\nTwoje rozwiązanie DataFrame API:")
+        df_result = self.employees_df.groupBy('department').agg(round(avg('salary'),2).alias('avg_salary')).orderBy(col('avg_salary').desc())
+        df_result.show()
+        print('--- Naprawdę tylko najwyższa wartość ---')
+        df_result = self.employees_df.groupBy('department').agg(avg('salary').alias('avg_salary')).orderBy(desc('avg_salary')).limit(1)
+        df_result.show()
         pass
     
     def exercise_4(self):
@@ -79,6 +105,12 @@ class PySparkExercises:
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: Window.partitionBy('department').orderBy(col('salary').desc())
         
+        print("\nTwoje rozwiązanie DataFrame API:")
+        window_spec = Window.partitionBy('department').orderBy(col('salary').desc())
+        df_result = self.employees_df.select('name', 'department', 'salary', row_number().over(window_spec).alias('rank'))
+        df_result.show()
+
+
         pass
     
     def exercise_5(self):
@@ -88,10 +120,18 @@ class PySparkExercises:
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: Window function z avg() OVER (PARTITION BY department)
         
+        window_spec = Window.partitionBy('department')
+        df_result = self.employees_df.withColumn('dept_avg', round(avg('salary').over(window_spec),2)).filter(col('salary') > col('dept_avg'))
+        df_result.show()
+
+        df_result = self.employees_df.withColumn('dept_avg', round(avg('salary').over(window_spec),2)).filter(col('salary') > col('dept_avg')).select('name', 'department', 'salary', 'dept_avg')
+        df_result.show()
+
         pass
     
     def run_exercises(self):
         """Uruchom wszystkie ćwiczenia."""
+        self.exercise_0()
         self.exercise_1()
         self.exercise_2()
         self.exercise_3()
