@@ -39,3 +39,7 @@ spark-warehouse/
 # OS
 .DS_Store
 Thumbs.db
+
+# Learning files (not for repo)
+sql_to_pyspark_guide.py
+sql_exercises.py
