@@ -15,6 +15,8 @@ class PySparkExercises:
             .master("local[1]") \
             .config("spark.driver.memory", "512m") \
             .config("spark.python.worker.reuse", "false") \
+            .config("spark.sql.warehouse.dir", "file:///C:/temp/spark-warehouse") \
+            .config("spark.local.dir", "C:/temp/spark-temp") \
             .getOrCreate()
         
         self.spark.sparkContext.setLogLevel("ERROR")
@@ -123,9 +125,8 @@ class PySparkExercises:
         window_spec = Window.partitionBy('department')
         df_result = self.employees_df.withColumn('dept_avg', round(avg('salary').over(window_spec),2)).filter(col('salary') > col('dept_avg'))
         df_result.show()
-
-        df_result = self.employees_df.withColumn('dept_avg', round(avg('salary').over(window_spec),2)).filter(col('salary') > col('dept_avg')).select('name', 'department', 'salary', 'dept_avg')
-        df_result.show()
+    
+        
 
         pass
     
@@ -134,6 +135,15 @@ class PySparkExercises:
         print("\n=== ĆWICZENIE 6: Najwyższa pensja w każdym dziale ===\n")
         
         # TODO: Użyj window function z RANK() = 1
+
+        window_spec = Window.partitionBy('department').orderBy(col('salary').desc())
+        df_result = self.employees_df.select('name', 'department', 'salary', row_number().over(window_spec).alias('rank')).filter(col('rank') == 1)
+        df_result.show()
+
+        print()
+        print('Ten sam ranking, ale bez widocznej kolumny rank')
+        df_result.select('name', 'department', 'salary').show()
+
         pass
     
     def exercise_7(self):
@@ -141,6 +151,30 @@ class PySparkExercises:
         print("\n=== ĆWICZENIE 7: Różnica od średniej w dziale ===\n")
         
         # TODO: salary - avg(salary) OVER (PARTITION BY department)
+
+        window_spec = Window.partitionBy('department')
+        df_result = self.employees_df.withColumn('difference rounded', round(col('salary') - avg('salary').over(window_spec)))
+        df_result.show()
+
+        print()
+        print('jeszcze raz, ale inaczej')
+        df_result = self.employees_df.select('*', (col('salary') - avg('salary').over(window_spec)).alias('diff'))
+        df_result.show()
+        print('i jeszcze jeden, ale ze zmienną diff_column')
+        diff_column = (col('salary') - avg('salary').over(window_spec)).alias('diff')
+        df_result = self.employees_df.select('*', diff_column)
+        df_result.show()
+
+        print('statystyki:')
+        print('Ilość wierszy: ', df_result.count())
+        print('Ilość kolumn: ',len(df_result.columns))
+        print()
+        print('używamy describe:')
+        df_result.describe().show()
+        print()
+        print('używamy printSchema:')
+        df_result.printSchema()
+
         pass
     
     def exercise_8(self):
@@ -148,6 +182,11 @@ class PySparkExercises:
         print("\n=== ĆWICZENIE 8: Ostatnio zatrudnieni w dziale ===\n")
         
         # TODO: Window function z ORDER BY hire_date DESC
+
+        window_spec = Window.partitionBy('department').orderBy(col('hire_date').desc())
+        df_result = self.employees_df.select('name', 'department', 'hire_date', row_number().over(window_spec).alias('rank')).filter(col('rank') == 1)
+        df_result.show()
+
         pass
     
     def exercise_9(self):
@@ -155,6 +194,16 @@ class PySparkExercises:
         print("\n=== ĆWICZENIE 9: Kategorie pensji ===\n")
         
         # TODO: Użyj CASE WHEN lub when().otherwise()
+        df_result = self.employees_df.select('*').withColumn('salary_cat', when(col('salary') > 5500, 'High').when(col('salary') >= 5000, 'Medium').otherwise('Low'))
+        df_result.show()
+
+        print()
+        print('bez selecta')
+        df_result = self.employees_df.withColumn('salary_cat', when(col('salary') > 5500, 'High').when(col('salary') >= 5000, 'Medium').otherwise('Low'))
+        df_result.show()
+
+        
+
         pass
     
     def exercise_10(self):
@@ -162,24 +211,27 @@ class PySparkExercises:
         print("\n=== ĆWICZENIE 10: Działy z wysokimi pensjami ===\n")
         
         # TODO: GROUP BY + HAVING MIN(salary) > 4600
+
+        df_result = self.employees_df.groupBy(col('department')).agg(min(col('salary')).alias('min_salary')).filter(col('min_salary') > 4600)
+        df_result.show()
         pass
 
     def run_exercises(self):
         """Uruchom wszystkie ćwiczenia."""
-        self.exercise_0()
-        self.exercise_1()
-        self.exercise_2()
-        self.exercise_3()
-        self.exercise_4()
-        self.exercise_5()
+        # self.exercise_0()
+        # self.exercise_1()
+        # self.exercise_2()
+        # self.exercise_3()
+        # self.exercise_4()
+        # self.exercise_5()
         
-        print("\n" + "="*50)
-        print("NOWE TRUDNIEJSZE ĆWICZENIA")
-        print("="*50)
+        # print("\n" + "="*50)
+        # print("NOWE TRUDNIEJSZE ĆWICZENIA")
+        # print("="*50)
         
-        self.exercise_6()
-        self.exercise_7()
-        self.exercise_8()
+        # self.exercise_6()
+        # self.exercise_7()
+        #self.exercise_8()
         self.exercise_9()
         self.exercise_10()
         
