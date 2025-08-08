@@ -129,6 +129,41 @@ class PySparkExercises:
 
         pass
     
+    def exercise_6(self):
+        """6. Znajdź pracownika z najwyższą pensją w każdym dziale"""
+        print("\n=== ĆWICZENIE 6: Najwyższa pensja w każdym dziale ===\n")
+        
+        # TODO: Użyj window function z RANK() = 1
+        pass
+    
+    def exercise_7(self):
+        """7. Oblicz różnicę między pensją pracownika a średnią w jego dziale"""
+        print("\n=== ĆWICZENIE 7: Różnica od średniej w dziale ===\n")
+        
+        # TODO: salary - avg(salary) OVER (PARTITION BY department)
+        pass
+    
+    def exercise_8(self):
+        """8. Znajdź pracowników zatrudnionych jako ostatni w każdym dziale"""
+        print("\n=== ĆWICZENIE 8: Ostatnio zatrudnieni w dziale ===\n")
+        
+        # TODO: Window function z ORDER BY hire_date DESC
+        pass
+    
+    def exercise_9(self):
+        """9. Stwórz kategorię pensji: Low (<5000), Medium (5000-5500), High (>5500)"""
+        print("\n=== ĆWICZENIE 9: Kategorie pensji ===\n")
+        
+        # TODO: Użyj CASE WHEN lub when().otherwise()
+        pass
+    
+    def exercise_10(self):
+        """10. Znajdź działy gdzie wszyscy pracownicy zarabiają powyżej 4600"""
+        print("\n=== ĆWICZENIE 10: Działy z wysokimi pensjami ===\n")
+        
+        # TODO: GROUP BY + HAVING MIN(salary) > 4600
+        pass
+
     def run_exercises(self):
         """Uruchom wszystkie ćwiczenia."""
         self.exercise_0()
@@ -137,6 +172,16 @@ class PySparkExercises:
         self.exercise_3()
         self.exercise_4()
         self.exercise_5()
+        
+        print("\n" + "="*50)
+        print("NOWE TRUDNIEJSZE ĆWICZENIA")
+        print("="*50)
+        
+        self.exercise_6()
+        self.exercise_7()
+        self.exercise_8()
+        self.exercise_9()
+        self.exercise_10()
         
         self.spark.stop()
 
