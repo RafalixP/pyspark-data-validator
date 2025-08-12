@@ -89,7 +89,8 @@ class AdvancedPySparkExercises:
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: użyj filter(col('salary') > 5000)
         
-        pass
+        df_result = self.employees_df.filter(col('salary') > 5000).orderBy(col('salary').asc())
+        df_result.show()
     
     def exercise_2(self):
         """2. PODSTAWY: Policz liczbę pracowników w każdym dziale"""
@@ -97,13 +98,17 @@ class AdvancedPySparkExercises:
         
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: użyj groupBy('department').count()
-        
-        pass
+     
+        df_result = self.employees_df.groupBy(col('department')).count()
+        df_result.show()
     
     def exercise_3(self):
         """3. PODSTAWY: Znajdź najwyższą i najniższą pensję w każdym mieście"""
         print("\n=== ĆWICZENIE 3: Min/Max pensja w mieście ===\n")
-        
+
+        df_result = self.employees_df.groupBy(col('city')).agg(max(col('salary')), min(col('salary')))
+        df_result.show()
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: groupBy('city').agg(max('salary'), min('salary'))
         
@@ -112,6 +117,14 @@ class AdvancedPySparkExercises:
     def exercise_4(self):
         """4. ŚREDNI: Stwórz kategorię pensji (Low/Medium/High) używając CASE WHEN"""
         print("\n=== ĆWICZENIE 4: Kategorie pensji ===\n")
+
+        df_result = self.employees_df.withColumn('salary_cat', when(col('salary') >= 6000, 'High').when(col('salary') >= 5000, 'Medium').otherwise('Low')).orderBy(col('salary_cat').desc())
+        df_result.show()
+
+
+
+
+
         
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: when(col('salary') < 4500, 'Low').when(col('salary') < 5500, 'Medium').otherwise('High')
@@ -119,9 +132,18 @@ class AdvancedPySparkExercises:
         pass
     
     def exercise_5(self):
-        """5. ŚREDNI: Znajdź pracowników zatrudnionych w ostatnich 2 latach"""
-        print("\n=== ĆWICZENIE 5: Pracownicy z ostatnich 2 lat ===\n")
-        
+        """5. ŚREDNI: Znajdź pracowników zatrudnionych w ostatnich 4 latach"""
+        print("\n=== ĆWICZENIE 5: Pracownicy z ostatnich 4 lat ===\n")
+
+        df_result = self.employees_df.withColumn('date_difference', datediff(current_date(), col('hire_date'))).filter(col('date_difference') <= 1460)
+        df_result.show()
+
+        print()
+        print('to samo, ale bez kolumny')
+        df_result = self.employees_df.filter(datediff(current_date(), col('hire_date')) <= 1460)
+        df_result.show()
+
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: użyj datediff(current_date(), col('hire_date')) <= 730
         
@@ -131,6 +153,13 @@ class AdvancedPySparkExercises:
         """6. ŚREDNI: Oblicz średnią pensję dla każdego poziomu (level) w każdym dziale"""
         print("\n=== ĆWICZENIE 6: Średnia pensja według poziomu i działu ===\n")
         
+        df_result = self.employees_df.groupBy(col('level')).agg(avg(col('salary')))
+        df_result.show()
+
+        df_result = self.employees_df.groupBy(col('department'), col('level')).agg(avg(col('salary')))
+        df_result.show()
+
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: groupBy('department', 'level').agg(avg('salary'))
         
@@ -139,6 +168,9 @@ class AdvancedPySparkExercises:
     def exercise_7(self):
         """7. ŚREDNI: JOIN - Połącz pracowników z informacjami o działach"""
         print("\n=== ĆWICZENIE 7: JOIN pracowników z działami ===\n")
+
+        df_result = self.employees_df.join(self.departments_df, col('department') == col('dept_name')).select('name', 'department', 'dept_name')
+        df_result.show()
         
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: employees_df.join(departments_df, col('department') == col('dept_name'))
@@ -149,6 +181,11 @@ class AdvancedPySparkExercises:
         """8. ZAAWANSOWANY: Window Function - Ranking pensji w każdym dziale"""
         print("\n=== ĆWICZENIE 8: Ranking pensji w dziale ===\n")
         
+        window_spec = Window.partitionBy('department').orderBy(col('salary').desc())
+        df_result = self.employees_df.select('*', row_number().over(window_spec).alias('rank'))
+        df_result.show()
+
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: Window.partitionBy('department').orderBy(col('salary').desc())
         
@@ -157,6 +194,24 @@ class AdvancedPySparkExercises:
     def exercise_9(self):
         """9. ZAAWANSOWANY: Oblicz różnicę pensji każdego pracownika od średniej w jego dziale"""
         print("\n=== ĆWICZENIE 9: Różnica od średniej działu ===\n")
+
+        window_spec = Window.partitionBy('department')
+        df_result = self.employees_df.withColumn('dept_avg', avg('salary').over(window_spec)).withColumn('salary_diff', col('dept_avg')-col('salary'))
+        df_result.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: withColumn('dept_avg', avg('salary').over(window)).withColumn('diff', col('salary') - col('dept_avg'))
@@ -237,10 +292,13 @@ class AdvancedPySparkExercises:
         
         for exercise in exercises:
             exercise()
+
+        # self.exercise_1()
+
         
         print("\n🎉 Gratulacje! Ukończyłeś wszystkie 15 ćwiczeń! 🎉")
         self.spark.stop()
 
 if __name__ == "__main__":
     exercises = AdvancedPySparkExercises()
-    exercises.run_exercises()
+    exercises.run_exercises() 
