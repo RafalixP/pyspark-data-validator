@@ -153,10 +153,13 @@ class AdvancedPySparkExercises:
         """6. ŚREDNI: Oblicz średnią pensję dla każdego poziomu (level) w każdym dziale"""
         print("\n=== ĆWICZENIE 6: Średnia pensja według poziomu i działu ===\n")
         
-        df_result = self.employees_df.groupBy(col('level')).agg(avg(col('salary')))
+        # df_result = self.employees_df.groupBy(col('level')).agg(avg(col('salary')))
+        # df_result.show()
+
+        df_result = self.employees_df.groupBy(col('department'), col('level')).agg(avg(col('salary'))).orderBy(col('department'))
         df_result.show()
 
-        df_result = self.employees_df.groupBy(col('department'), col('level')).agg(avg(col('salary')))
+        df_result = self.employees_df.groupBy(col('department'), col('level')).agg(avg(col('salary'))).orderBy(col('level'))
         df_result.show()
 
 
@@ -199,20 +202,10 @@ class AdvancedPySparkExercises:
         df_result = self.employees_df.withColumn('dept_avg', avg('salary').over(window_spec)).withColumn('salary_diff', col('dept_avg')-col('salary'))
         df_result.show()
 
+        df_result = self.employees_df.withColumn('salary_diff', avg('salary').over(window_spec)-col('salary'))
+        df_result.show()
 
 
-
-
-
-
-
-
-
-
-
-
-
-        
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: withColumn('dept_avg', avg('salary').over(window)).withColumn('diff', col('salary') - col('dept_avg'))
         
@@ -221,7 +214,13 @@ class AdvancedPySparkExercises:
     def exercise_10(self):
         """10. ZAAWANSOWANY: Znajdź pracowników, którzy zarabiają więcej niż poprzednik w rankingu"""
         print("\n=== ĆWICZENIE 10: Porównanie z poprzednikiem ===\n")
-        
+
+
+
+        window_spec = Window.partitionBy('department').orderBy('salary')
+        df_result = self.employees_df.withColumn('wartosc_poprzednia', lag('salary').over(window_spec)).withColumn('earns_more', col('salary') > col('wartosc_poprzednia'))
+        df_result.show()
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: użyj lag(col('salary')).over(window) do porównania z poprzednią wartością
         
@@ -230,7 +229,10 @@ class AdvancedPySparkExercises:
     def exercise_11(self):
         """11. EKSPERT: Kompleksowy JOIN - Pracownicy, projekty i godziny"""
         print("\n=== ĆWICZENIE 11: Kompleksowy JOIN trzech tabel ===\n")
-        
+
+        df_result = self.employees_df.join(self.employee_projects_df, col('id') == col('employee_id')).join(self.projects_df, ['project_id'])
+        df_result.show()
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: Połącz employees -> employee_projects -> projects
         
@@ -240,6 +242,8 @@ class AdvancedPySparkExercises:
         """12. EKSPERT: Pivot - Przekształć dane o projektach na kolumny"""
         print("\n=== ĆWICZENIE 12: Pivot projektów ===\n")
         
+        df_result = self.employee_projects_df.join(self.employees_df, col('employee_id') == col('id') ).groupBy('name').pivot('project_id').agg(sum('hours_allocated'))
+        df_result.show()
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: użyj pivot() żeby projekty stały się kolumnami z godzinami
         
@@ -248,7 +252,14 @@ class AdvancedPySparkExercises:
     def exercise_13(self):
         """13. EKSPERT: Analiza kohort - Grupuj pracowników według roku zatrudnienia"""
         print("\n=== ĆWICZENIE 13: Analiza kohort zatrudnienia ===\n")
+
         
+        df_result = self.employees_df.withColumn('hire_year', year(col('hire_date'))).groupBy('hire_year').count()
+        df_result.show()
+
+        df_result = self.employees_df.withColumn('hire_year', year(col('hire_date'))) #.groupBy('hire_year').count()
+        df_result.show()
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: year(col('hire_date')), percentile_approx, collect_list
         
@@ -257,7 +268,11 @@ class AdvancedPySparkExercises:
     def exercise_14(self):
         """14. EKSPERT: Rekurencyjne obliczenia - Skumulowana suma pensji"""
         print("\n=== ĆWICZENIE 14: Running total pensji ===\n")
-        
+
+        window_spec = Window.orderBy(col('salary')).rowsBetween(Window.unboundedPreceding, Window.currentRow)
+        df_result = self.employees_df.withColumn('running_total', sum('salary').over(window_spec))
+        df_result.show()
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: sum().over(Window.orderBy().rowsBetween(Window.unboundedPreceding, Window.currentRow))
         
@@ -267,6 +282,29 @@ class AdvancedPySparkExercises:
         """15. MISTRZ: Zaawansowana analityka - Top N w każdej grupie z dodatkowymi warunkami"""
         print("\n=== ĆWICZENIE 15: Top 2 najlepiej płatnych w każdym dziale z dodatkowymi warunkami ===\n")
         
+        window_spec = Window.partitionBy('department').orderBy(col('salary').desc())
+        df_result = self.employees_df.withColumn('rank', row_number().over(window_spec)).filter(col('rank') <= 2)
+        df_result.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         # TODO: Napisz rozwiązanie tutaj
         # Wskazówka: Połącz window functions, filtering, i complex conditions
         # Znajdź top 2 najlepiej płatnych w każdym dziale, ale tylko tych zatrudnionych po 2019
