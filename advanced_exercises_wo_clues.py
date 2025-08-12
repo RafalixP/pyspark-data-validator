@@ -106,6 +106,16 @@ class AdvancedPySparkExercises:
         
         pass
     
+    def exercise_3a(self):
+        """3A. Oblicz medianę pensji dla każdego działu używając percentile_approx"""
+        print("\n=== ĆWICZENIE 3A: Mediana pensji w dziale ===\n")
+        
+        # TODO: Napisz rozwiązanie tutaj
+        
+        pass
+    
+
+    
     def exercise_4(self):
         """4. ŚREDNI: Stwórz kategorię pensji (Low/Medium/High) używając CASE WHEN"""
         print("\n=== ĆWICZENIE 4: Kategorie pensji ===\n")
@@ -117,6 +127,14 @@ class AdvancedPySparkExercises:
     def exercise_5(self):
         """5. ŚREDNI: Znajdź pracowników zatrudnionych w ostatnich 2 latach"""
         print("\n=== ĆWICZENIE 5: Pracownicy z ostatnich 2 lat ===\n")
+        
+        # TODO: Napisz rozwiązanie tutaj
+        
+        pass
+    
+    def exercise_5a(self):
+        """5A. Przekształć liczbę pracowników według działu i poziomu na tabelę przestawną"""
+        print("\n=== ĆWICZENIE 5A: Pivot działy vs poziomy ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
@@ -138,6 +156,16 @@ class AdvancedPySparkExercises:
         
         pass
     
+    def exercise_7a(self):
+        """7A. Znajdź pracowników bez przypisanych projektów używając LEFT ANTI JOIN"""
+        print("\n=== ĆWICZENIE 7A: Pracownicy bez projektów ===\n")
+        
+        # TODO: Napisz rozwiązanie tutaj
+        
+        pass
+    
+
+    
     def exercise_8(self):
         """8. ZAAWANSOWANY: Window Function - Ranking pensji w każdym dziale"""
         print("\n=== ĆWICZENIE 8: Ranking pensji w dziale ===\n")
@@ -149,6 +177,14 @@ class AdvancedPySparkExercises:
     def exercise_9(self):
         """9. ZAAWANSOWANY: Oblicz różnicę pensji każdego pracownika od średniej w jego dziale"""
         print("\n=== ĆWICZENIE 9: Różnica od średniej działu ===\n")
+        
+        # TODO: Napisz rozwiązanie tutaj
+        
+        pass
+    
+    def exercise_9a(self):
+        """9A. Stwórz macierz pracowników vs miasta z ich średnimi pensjami"""
+        print("\n=== ĆWICZENIE 9A: Pivot pracownicy vs miasta z pensjami ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
@@ -170,6 +206,14 @@ class AdvancedPySparkExercises:
         
         pass
     
+    def exercise_11a(self):
+        """11A. Stwórz ranking pracowników według łącznej liczby godzin w projektach z percentylami"""
+        print("\n=== ĆWICZENIE 11A: Ranking godzin z percentylami ===\n")
+        
+        # TODO: Napisz rozwiązanie tutaj
+        
+        pass
+    
     def exercise_12(self):
         """12. EKSPERT: Pivot - Przekształć dane o projektach na kolumny"""
         print("\n=== ĆWICZENIE 12: Pivot projektów ===\n")
@@ -186,9 +230,19 @@ class AdvancedPySparkExercises:
         
         pass
     
+
+    
     def exercise_14(self):
         """14. EKSPERT: Rekurencyjne obliczenia - Skumulowana suma pensji"""
         print("\n=== ĆWICZENIE 14: Running total pensji ===\n")
+        
+        # TODO: Napisz rozwiązanie tutaj
+        
+        pass
+    
+    def exercise_14a(self):
+        """14A. Utwórz kompleksową macierz projektów vs statusów z sumą godzin i średnią pensją pracowników"""
+        print("\n=== ĆWICZENIE 14A: Pivot projekty vs statusy z metrykami ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
@@ -213,9 +267,9 @@ class AdvancedPySparkExercises:
         print("👑 MISTRZ (14-15): Zaawansowana analityka\n")
         
         exercises = [
-            self.exercise_1, self.exercise_2, self.exercise_3, self.exercise_4, self.exercise_5,
-            self.exercise_6, self.exercise_7, self.exercise_8, self.exercise_9, self.exercise_10,
-            self.exercise_11, self.exercise_12, self.exercise_13, self.exercise_14, self.exercise_15
+            self.exercise_1, self.exercise_2, self.exercise_3, self.exercise_4, self.exercise_5, self.exercise_5a,
+            self.exercise_6, self.exercise_7, self.exercise_8, self.exercise_9, self.exercise_9a, self.exercise_10,
+            self.exercise_11, self.exercise_12, self.exercise_13, self.exercise_14, self.exercise_14a, self.exercise_15
         ]
         
         for exercise in exercises:
