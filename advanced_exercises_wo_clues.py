@@ -89,6 +89,9 @@ class AdvancedPySparkExercises:
         print("=== ĆWICZENIE 1: Pracownicy z pensją > 5000 ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        df_result = self.employees_df.filter(col('salary')>5000).orderBy(col('salary').desc())
+        df_result.show()
         
         pass
     
@@ -98,6 +101,9 @@ class AdvancedPySparkExercises:
         
         # TODO: Napisz rozwiązanie tutaj
         
+        df_result = self.employees_df.groupBy(col('department')).count()
+        df_result.show()
+        
         pass
     
     def exercise_3(self):
@@ -106,6 +112,8 @@ class AdvancedPySparkExercises:
         
         # TODO: Napisz rozwiązanie tutaj
         
+        df_result = self.employees_df.groupBy(col('city')).agg(max(col('salary')),min(col('salary')),avg(col('salary')))
+        df_result.show()
         pass
     
     def exercise_3a(self):
@@ -114,6 +122,9 @@ class AdvancedPySparkExercises:
         
         # TODO: Napisz rozwiązanie tutaj
         
+        df_result = self.employees_df.groupBy(col('department')).agg(percentile_approx(col('salary'),0.5))
+        df_result.show()
+
         pass
     
     
