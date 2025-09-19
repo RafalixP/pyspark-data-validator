@@ -16,6 +16,8 @@ class AdvancedPySparkExercises:
             .master("local[1]") \
             .config("spark.driver.memory", "512m") \
             .config("spark.python.worker.reuse", "false") \
+            .config("spark.sql.warehouse.dir", "file:///c:/tmp/spark-warehouse") \
+            .config("spark.local.dir", "c:/tmp/spark-temp") \
             .getOrCreate()
         
         self.spark.sparkContext.setLogLevel("ERROR")
@@ -83,27 +85,57 @@ class AdvancedPySparkExercises:
         self.employee_projects_df = self.spark.table("employee_projects")
     
     def exercise_1(self):
-        """1. PODSTAWY: Wybierz pracowników z pensją powyżej 5000"""
+        """1. Wybierz pracowników z pensją powyżej 5000"""
         print("=== ĆWICZENIE 1: Pracownicy z pensją > 5000 ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+        df_result = self.employees_df.filter(col('salary') > 5000)
+        df_result.show()
+
+        df_result = self.employees_df.filter(col('salary') > 5000).select('name')
+        df_result.show()
         
+        # Data validation assertions
+        assert df_result.count() > 0, "Should find employees with salary > 5000"
+        assert df_result.filter(col('salary') <= 5000).count() == 0, "All results should have salary > 5000"
+        assert df_result.filter(col('name').isNull()).count() == 0, "No null names should be present"
+
         pass
     
     def exercise_2(self):
-        """2. PODSTAWY: Policz liczbę pracowników w każdym dziale"""
+        """2. Policz liczbę pracowników w każdym dziale"""
         print("\n=== ĆWICZENIE 2: Liczba pracowników w dziale ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
+        df_result = self.employees_df.groupBy('department').count()
+        df_result.show()
+
+        df_result = self.employees_df.select('*').groupBy('department').count()
+        df_result.show()
+        
+        # Data quality validations
+        total_employees = self.employees_df.count()
+        sum_by_dept = df_result.agg(sum('count')).collect()[0][0]
+        assert total_employees == sum_by_dept, "Sum of employees by department should equal total employees"
+        assert df_result.filter(col('count') <= 0).count() == 0, "All departments should have positive employee count"
+        
         pass
     
     def exercise_3(self):
-        """3. PODSTAWY: Znajdź najwyższą i najniższą pensję w każdym mieście"""
+        """3. Znajdź najwyższą i najniższą pensję w każdym mieście"""
         print("\n=== ĆWICZENIE 3: Min/Max pensja w mieście ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
+        df_result = self.employees_df.groupBy('city').agg(max(col('salary')), min(col('salary')))
+        df_result.show()
+        
+        # Salary range validations
+        assert df_result.filter(col('max(salary)') < col('min(salary)')).count() == 0, "Max salary should be >= min salary"
+        assert df_result.filter(col('min(salary)') < 0).count() == 0, "Minimum salary should be positive"
+        assert df_result.filter(col('max(salary)').isNull() | col('min(salary)').isNull()).count() == 0, "No null salary values"
+
         pass
     
     def exercise_3a(self):
@@ -111,24 +143,39 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 3A: Mediana pensji w dziale ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
-        
-        pass
-    
 
+        df_result = self.employees_df.groupBy('department').agg(percentile_approx(col('salary'), [0.5,0.25]).alias('mediana'))
+        df_result.show()
+
+        print('bez listy, jeden percentyl')
+        df_result = self.employees_df.groupBy('department').agg(percentile_approx(col('salary'), 0.5).alias('mediana'))
+        df_result.show()
+
+        print('spark sql')
+        df_result = self.spark.sql("SELECT department, percentile_approx(salary, 0.5) as mediana FROM employees GROUP BY department")
+        df_result.show()
+    
     
     def exercise_4(self):
-        """4. ŚREDNI: Stwórz kategorię pensji (Low/Medium/High) używając CASE WHEN"""
+        """4. Stwórz kategorię pensji (Low/Medium/High) używając CASE WHEN"""
         print("\n=== ĆWICZENIE 4: Kategorie pensji ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
-        
+        df_result = self.employees_df.withColumn('salary_rank', when(col('salary') >= 5500, 'High').when(col('salary') >= 4500, 'Medium').otherwise('Low')).orderBy(col('salary').desc())
+        df_result.show()
         pass
     
     def exercise_5(self):
-        """5. ŚREDNI: Znajdź pracowników zatrudnionych w ostatnich 2 latach"""
-        print("\n=== ĆWICZENIE 5: Pracownicy z ostatnich 2 lat ===\n")
+        """5. Znajdź pracowników zatrudnionych w ostatnich 4 latach"""
+        print("\n=== ĆWICZENIE 5: Pracownicy z ostatnich 4 lat ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        df_result = self.employees_df.filter(datediff(current_date(),col('hire_date')) <= 1460)
+        df_result.show()
+
+        df_result = self.employees_df.withColumn('roznica_dat', datediff(current_date(),col('hire_date')))
+        df_result.show()
         
         pass
     
@@ -137,22 +184,46 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 5A: Pivot działy vs poziomy ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+        df_result = self.employees_df.join(self.departments_df, col('department') == col('dept_name')).groupBy(col('dept_name')).pivot('level').agg(count(lit(1)))
+        df_result.show()       
+
+        print()
+        print('z listą do określenia kolejności column w pivot')
+        levels_order = ['Junior', 'Mid', 'Senior', 'Expert']
+        df_result = self.employees_df.join(self.departments_df, col('department') == col('dept_name')).groupBy(col('dept_name')).pivot('level', levels_order).agg(count(lit(1)))
+        df_result.show()                                                                                                                                        
         
-        pass
+        print()
+        print('prościej')
+        df_result = self.employees_df.groupBy(col('department')).pivot('level').count()
+        df_result.show()
+
     
     def exercise_6(self):
-        """6. ŚREDNI: Oblicz średnią pensję dla każdego poziomu (level) w każdym dziale"""
+        """6. Oblicz średnią pensję dla każdego poziomu (level) w każdym dziale"""
         print("\n=== ĆWICZENIE 6: Średnia pensja według poziomu i działu ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        df_result = self.employees_df.groupBy(col('level'), col('department')).agg(avg(col('salary')).alias('average_salary')).orderBy(col('department'))
+        df_result.show()
         
         pass
     
     def exercise_7(self):
-        """7. ŚREDNI: JOIN - Połącz pracowników z informacjami o działach"""
+        """7. JOIN - Połącz pracowników z informacjami o działach"""
         print("\n=== ĆWICZENIE 7: JOIN pracowników z działami ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+        
+        df_result = self.employees_df.join(self.departments_df, col('department') == col('dept_name'))
+        df_result.show()
+        
+        # JOIN integrity validations
+        employees_count = self.employees_df.count()
+        joined_count = df_result.count()
+        assert joined_count == employees_count, "JOIN should preserve all employee records"
+        assert df_result.filter(col('dept_full_name').isNull()).count() == 0, "All employees should have department info"
         
         pass
     
@@ -161,25 +232,41 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 7A: Pracownicy bez projektów ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+        df_result = self.employees_df.join(self.employee_projects_df, col('id') == col('employee_id'), 'left_anti')
+        df_result.show()
         
         pass
     
 
     
     def exercise_8(self):
-        """8. ZAAWANSOWANY: Window Function - Ranking pensji w każdym dziale"""
+        """8. Window Function - Ranking pensji w każdym dziale"""
         print("\n=== ĆWICZENIE 8: Ranking pensji w dziale ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
+        window_spec = Window.partitionBy('department').orderBy(col('salary').desc())
+        df_result = self.employees_df.withColumn('rank', row_number().over(window_spec))
+        df_result.show()
+        
+        # Window function validations
+        assert df_result.filter(col('rank') <= 0).count() == 0, "All ranks should be positive"
+        assert df_result.filter(col('rank').isNull()).count() == 0, "No null ranks allowed"
+        max_rank_per_dept = df_result.groupBy('department').agg(max('rank').alias('max_rank'))
+        employees_per_dept = self.employees_df.groupBy('department').count()
+        validation_df = max_rank_per_dept.join(employees_per_dept, 'department')
+        assert validation_df.filter(col('max_rank') != col('count')).count() == 0, "Max rank should equal employee count per department"
+
         pass
     
     def exercise_9(self):
-        """9. ZAAWANSOWANY: Oblicz różnicę pensji każdego pracownika od średniej w jego dziale"""
+        """9. Oblicz różnicę pensji każdego pracownika od średniej w jego dziale"""
         print("\n=== ĆWICZENIE 9: Różnica od średniej działu ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
-        
+        window_spec = Window.partitionBy('department')
+        df_result = self.employees_df.withColumn('difference', avg(col('salary')).over(window_spec) - col('salary'))
+        df_result.show()
         pass
     
     def exercise_9a(self):
@@ -191,7 +278,7 @@ class AdvancedPySparkExercises:
         pass
     
     def exercise_10(self):
-        """10. ZAAWANSOWANY: Znajdź pracowników, którzy zarabiają więcej niż poprzednik w rankingu"""
+        """10. Znajdź pracowników, którzy zarabiają więcej niż poprzednik w rankingu"""
         print("\n=== ĆWICZENIE 10: Porównanie z poprzednikiem ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
@@ -199,7 +286,7 @@ class AdvancedPySparkExercises:
         pass
     
     def exercise_11(self):
-        """11. EKSPERT: Kompleksowy JOIN - Pracownicy, projekty i godziny"""
+        """11. Kompleksowy JOIN - Pracownicy, projekty i godziny"""
         print("\n=== ĆWICZENIE 11: Kompleksowy JOIN trzech tabel ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
@@ -215,7 +302,7 @@ class AdvancedPySparkExercises:
         pass
     
     def exercise_12(self):
-        """12. EKSPERT: Pivot - Przekształć dane o projektach na kolumny"""
+        """12. Pivot - Przekształć dane o projektach na kolumny"""
         print("\n=== ĆWICZENIE 12: Pivot projektów ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
@@ -223,7 +310,7 @@ class AdvancedPySparkExercises:
         pass
     
     def exercise_13(self):
-        """13. EKSPERT: Analiza kohort - Grupuj pracowników według roku zatrudnienia"""
+        """13. Analiza kohort - Grupuj pracowników według roku zatrudnienia"""
         print("\n=== ĆWICZENIE 13: Analiza kohort zatrudnienia ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
@@ -233,7 +320,7 @@ class AdvancedPySparkExercises:
 
     
     def exercise_14(self):
-        """14. EKSPERT: Rekurencyjne obliczenia - Skumulowana suma pensji"""
+        """14. Rekurencyjne obliczenia - Skumulowana suma pensji"""
         print("\n=== ĆWICZENIE 14: Running total pensji ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
@@ -249,7 +336,7 @@ class AdvancedPySparkExercises:
         pass
     
     def exercise_15(self):
-        """15. MISTRZ: Zaawansowana analityka - Top N w każdej grupie z dodatkowymi warunkami"""
+        """15. Zaawansowana analityka - Top N w każdej grupie z dodatkowymi warunkami"""
         print("\n=== ĆWICZENIE 15: Top 2 najlepiej płatnych w każdym dziale z dodatkowymi warunkami ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
@@ -267,9 +354,9 @@ class AdvancedPySparkExercises:
         print("👑 MISTRZ (14-15): Zaawansowana analityka\n")
         
         exercises = [
-            self.exercise_1, self.exercise_2, self.exercise_3, self.exercise_4, self.exercise_5, self.exercise_5a,
-            self.exercise_6, self.exercise_7, self.exercise_8, self.exercise_9, self.exercise_9a, self.exercise_10,
-            self.exercise_11, self.exercise_12, self.exercise_13, self.exercise_14, self.exercise_14a, self.exercise_15
+            self.exercise_1, self.exercise_2, self.exercise_3, self.exercise_3a, self.exercise_4, self.exercise_5, self.exercise_5a,
+            self.exercise_6, self.exercise_7, self.exercise_7a, self.exercise_8, self.exercise_9, self.exercise_9a, self.exercise_10,
+            self.exercise_11, self.exercise_11a, self.exercise_12, self.exercise_13, self.exercise_14, self.exercise_14a, self.exercise_15
         ]
         
         for exercise in exercises:
@@ -278,6 +365,37 @@ class AdvancedPySparkExercises:
         print("\n🎉 Gratulacje! Ukończyłeś wszystkie 15 ćwiczeń! 🎉")
         self.spark.stop()
 
+    def validate_data_quality(self):
+        """Comprehensive data quality validation suite"""
+        print("\n=== DATA QUALITY VALIDATION SUITE ===\n")
+        
+        # Schema validation
+        expected_columns = ['id', 'name', 'department', 'salary', 'hire_date', 'level', 'city']
+        actual_columns = self.employees_df.columns
+        assert set(expected_columns) == set(actual_columns), f"Schema mismatch. Expected: {expected_columns}, Got: {actual_columns}"
+        
+        # Data type validation
+        schema_dict = {field.name: str(field.dataType) for field in self.employees_df.schema.fields}
+        assert 'int' in schema_dict['id'].lower(), "ID should be integer type"
+        assert 'string' in schema_dict['name'].lower(), "Name should be string type"
+        
+        # Null value checks
+        for col_name in ['id', 'name', 'department', 'salary']:
+            null_count = self.employees_df.filter(col(col_name).isNull()).count()
+            assert null_count == 0, f"Column {col_name} should not have null values"
+        
+        # Business rule validations
+        assert self.employees_df.filter(col('salary') < 0).count() == 0, "Salary should be positive"
+        assert self.employees_df.filter(col('id') <= 0).count() == 0, "ID should be positive"
+        
+        # Duplicate checks
+        total_count = self.employees_df.count()
+        unique_id_count = self.employees_df.select('id').distinct().count()
+        assert total_count == unique_id_count, "Employee IDs should be unique"
+        
+        print("✅ All data quality validations passed!")
+
 if __name__ == "__main__":
     exercises = AdvancedPySparkExercises()
+    exercises.validate_data_quality()
     exercises.run_exercises()
