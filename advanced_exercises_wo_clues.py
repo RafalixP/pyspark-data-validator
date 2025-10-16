@@ -74,7 +74,8 @@ class AdvancedPySparkExercises:
                 (1, 102, 20), (3, 102, 35), (8, 102, 45),
                 (4, 103, 60), (7, 103, 40),
                 (9, 104, 50), (10, 104, 30),
-                (2, 105, 25), (6, 105, 35)
+                (2, 105, 25), (6, 105, 35),
+                (NULL, 106, 25)
             AS t(employee_id, project_id, hours_allocated)
         """)
         
@@ -133,6 +134,12 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 4: Kategorie pensji ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        df_result = self.employees_df.withColumn('SalaryLevel', 
+                                                 when(col('salary') >= 5000, 'High')
+                                                 .when(col('salary') >= 3500, 'medium')
+                                                 .otherwise('low'))
+        df_result.show()
         
         pass
     
@@ -141,6 +148,9 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 5: Pracownicy z ostatnich 4 lat ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        df_result = self.employees_df.filter(col('hire_date') >= date_sub(current_date(), 365*4))
+        df_result.show()
         
         pass
     
@@ -149,6 +159,25 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 5A: Pivot działy vs poziomy ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        print('Średnia pensja zamiast count')
+        df = self.employees_df.groupBy('department').pivot('level').agg(avg('salary'))
+        df.show()
+
+        print('Wiele metryk jednocześnie')
+        df = self.employees_df.groupBy('department').pivot('level').agg(
+            count('*').alias('count'),
+            avg('salary').alias('avg_salary')
+        )
+        df.show()
+
+        print('Tu w końcu rozwiązanie')
+        df_result = self.employees_df.groupBy(col('department')).pivot('level').count()
+        df_result.show()
+
+        print('i jeszcze raz ale inaczej')
+        df_result_bis = self.employees_df.groupBy('department').pivot('level').count()
+        df_result_bis.show()
         
         pass
 
@@ -158,7 +187,15 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 6: Średnia pensja według poziomu i działu ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        df_result = self.employees_df.groupBy(col('department')).pivot('level').agg(avg('salary'))
+        df_result.show()
         
+        print('inaczej, bez pivota')
+
+        df_result = self.employees_df.groupBy('level', 'department').agg(avg('salary'))
+        df_result.show()
+
         pass
     
     def exercise_7(self):
@@ -166,6 +203,9 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 7: JOIN pracowników z działami ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        df_result = self.employees_df.join(self.departments_df, col('department') == col('dept_name'))
+        df_result.show()
         
         pass
     
@@ -174,8 +214,34 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 7A: Pracownicy bez projektów ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        print('left anti')
+        df_result = self.employees_df.join(self.employee_projects_df, col('id') == col('employee_id'), 'left_anti')
+        df_result.show()
+
+        print('left')
+        df_result = self.employees_df.join(self.employee_projects_df, col('id') == col('employee_id'), 'left')
+        df_result.show()
         
+        print('left_semi')
+        df_result = self.employees_df.join(self.employee_projects_df, col('id') == col('employee_id'), 'left_semi')
+        df_result.show()
+        
+
+        print('right_anti - symulacja')
+        df_result = self.employee_projects_df.join(self.employees_df, col('employee_id') == col('id'), 'left_anti')
+        df_result.show()
+
+        print('right')
+        df_result = self.employees_df.join(self.employee_projects_df, col('id') == col('employee_id'), 'right')
+        df_result.show()
+
+        print('right_semi - symulacja') 
+        df_result = self.employee_projects_df.join(self.employees_df, col('employee_id') == col('id'), 'left_semi')
+        df_result.show()
         pass
+
+        
     
 
     
@@ -185,6 +251,9 @@ class AdvancedPySparkExercises:
         
         # TODO: Napisz rozwiązanie tutaj
         
+        window_spec =  Window.partitionBy('department').orderBy(col('salary').desc())
+        df_result = self.employees_df.select('*', row_number().over(window_spec).alias('rank'))
+        df_result.show()
         pass
     
     def exercise_9(self):
@@ -192,6 +261,19 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 9: Różnica od średniej działu ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        print('opcja 1 - join')
+
+        dept_avg = self.employees_df.groupBy('department').agg(avg('salary').alias('dept_avg'))
+        df_result = self.employees_df.join(dept_avg, 'department').withColumn('difference', col('salary') - col('dept_avg'))
+        df_result.show()
+
+        print('opcja 2 - window function')
+
+        window_spec = Window.partitionBy('department')
+        df_result = self.employees_df.withColumn('dept_avg', avg('salary').over(window_spec)).withColumn('difference', col('salary') - col('dept_avg'))
+        df_result.show()
+
         
         pass
     
