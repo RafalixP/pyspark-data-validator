@@ -265,6 +265,7 @@ class AdvancedPySparkExercises:
         print('opcja 1 - join')
 
         dept_avg = self.employees_df.groupBy('department').agg(avg('salary').alias('dept_avg'))
+        dept_avg.show()
         df_result = self.employees_df.join(dept_avg, 'department').withColumn('difference', col('salary') - col('dept_avg'))
         df_result.show()
 
@@ -278,11 +279,13 @@ class AdvancedPySparkExercises:
         pass
     
     def exercise_9a(self):
-        """9A. Stwórz macierz pracowników vs miasta z ich średnimi pensjami"""
-        print("\n=== ĆWICZENIE 9A: Pivot pracownicy vs miasta z pensjami ===\n")
+        """9A. Stwórz macierz miast vs działów z ich średnimi pensjami"""
+        print("\n=== ĆWICZENIE 9A: Stwórz macierz miast vs działów z ich średnimi pensjami ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
+        result_df = self.employees_df.groupBy('name').pivot('city').agg(avg(col('salary')))
+        result_df.show()
         pass
     
     def exercise_10(self):
