@@ -284,13 +284,16 @@ class AdvancedPySparkExercises:
         
         # TODO: Napisz rozwiązanie tutaj
         
-        result_df = self.employees_df.groupBy('name').pivot('city').agg(avg(col('salary')))
-        result_df.show()
+        result_df1 = self.employees_df.groupBy('city').pivot('department').agg(avg(col('salary')))
+        result_df1.show()
+
+        result_df2 = self.employees_df.groupBy('department').pivot('city').agg(avg(col('salary')))
+        result_df2.show()
         pass
     
     def exercise_10(self):
-        """10. Znajdź pracowników, którzy zarabiają więcej niż poprzednik w rankingu"""
-        print("\n=== ĆWICZENIE 10: Porównanie z poprzednikiem ===\n")
+        """10. Znajdź pracowników, którzy zarabiają więcej niż następnik w rankingu"""
+        print("\n=== ĆWICZENIE 10: Znajdź pracowników, którzy zarabiają więcej niż następnik w rankingu ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
         
