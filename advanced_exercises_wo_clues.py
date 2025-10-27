@@ -13,11 +13,8 @@ class AdvancedPySparkExercises:
         # Windows-compatible configuration
         self.spark = SparkSession.builder \
             .appName("AdvancedPySparkExercises") \
-            .master("local[1]") \
-            .config("spark.driver.memory", "512m") \
-            .config("spark.python.worker.reuse", "false") \
-            .config("spark.sql.warehouse.dir", "file:///c:/tmp/spark-warehouse") \
-            .config("spark.local.dir", "c:/tmp/spark-temp") \
+            .master("local[*]") \
+            .config("spark.sql.adaptive.enabled", "false") \
             .getOrCreate()
         
         self.spark.sparkContext.setLogLevel("ERROR")
@@ -296,6 +293,8 @@ class AdvancedPySparkExercises:
         print("\n=== ĆWICZENIE 10: Znajdź pracowników, którzy zarabiają więcej niż następnik w rankingu ===\n")
         
         # TODO: Napisz rozwiązanie tutaj
+
+        window_spec = Window.orderBy('salary')
         
         pass
     
@@ -303,6 +302,8 @@ class AdvancedPySparkExercises:
         """11. Kompleksowy JOIN - Pracownicy, projekty i godziny"""
         print("\n=== ĆWICZENIE 11: Kompleksowy JOIN trzech tabel ===\n")
         
+        result_df = self.employees_df.join(self.employee_projects_df, col("id") == col("employee_id")).join(self.projects_df, self.employee_projects_df.project_id == self.projects_df.project_id)
+        result_df.show()
         # TODO: Napisz rozwiązanie tutaj
         
         pass
@@ -310,6 +311,14 @@ class AdvancedPySparkExercises:
     def exercise_11a(self):
         """11A. Stwórz ranking pracowników według łącznej liczby godzin w projektach z percentylami"""
         print("\n=== ĆWICZENIE 11A: Ranking godzin z percentylami ===\n")
+
+        #godziny
+        hours_df = self.employees_df.join(self.employee_projects_df, col("id") == col("employee_id")).groupBy(col('name')).agg(sum(col('hours_allocated')).alias("total_hours")).orderBy(col('total_hours').desc())
+
+        #percentyle
+        window_spec = Window.orderBy(col('total_hours').desc())
+        result_df = hours_df.withColumn('percentile', percent_rank().over(window_spec))
+        result_df.show()
         
         # TODO: Napisz rozwiązanie tutaj
         
@@ -319,6 +328,8 @@ class AdvancedPySparkExercises:
         """12. Pivot - Przekształć dane o projektach na kolumny"""
         print("\n=== ĆWICZENIE 12: Pivot projektów ===\n")
         
+        result_df = self.employee_projects_df.groupBy('employee_id').pivot('project_id').agg(sum(col('hours_allocated')))
+        result_df.show()
         # TODO: Napisz rozwiązanie tutaj
         
         pass
@@ -327,6 +338,9 @@ class AdvancedPySparkExercises:
         """13. Analiza kohort - Grupuj pracowników według roku zatrudnienia"""
         print("\n=== ĆWICZENIE 13: Analiza kohort zatrudnienia ===\n")
         
+        result_df = self.employees_df.withColumn('hire_year', year(col('hire_date'))).groupBy('hire_year').agg(count("*").alias('hired_count'),avg('salary').alias('avg_starting_salary'))
+        result_df.show()
+
         # TODO: Napisz rozwiązanie tutaj
         
         pass
@@ -337,6 +351,9 @@ class AdvancedPySparkExercises:
         """14. Rekurencyjne obliczenia - Skumulowana suma pensji"""
         print("\n=== ĆWICZENIE 14: Running total pensji ===\n")
         
+        window_spec = Window.orderBy(col('name')).rowsBetween(Window.unboundedPreceding, Window.currentRow)
+        result_df = self.employees_df.withColumn('running_total', sum('salary').over(window_spec))
+        result_df.show()
         # TODO: Napisz rozwiązanie tutaj
         
         pass
@@ -344,6 +361,12 @@ class AdvancedPySparkExercises:
     def exercise_14a(self):
         """14A. Utwórz kompleksową macierz projektów vs statusów z sumą godzin i średnią pensją pracowników"""
         print("\n=== ĆWICZENIE 14A: Pivot projekty vs statusy z metrykami ===\n")
+
+        result_df = self.employees_df.join(self.employee_projects_df, col("id") == col("employee_id")) \
+                                    .join(self.projects_df, 'project_id') \
+                                    .groupBy("project_name").pivot("status") \
+                                    .agg(sum(col("hours_allocated")), avg(col("salary")))
+        result_df.show()
         
         # TODO: Napisz rozwiązanie tutaj
         
@@ -353,6 +376,16 @@ class AdvancedPySparkExercises:
         """15. Zaawansowana analityka - Top N w każdej grupie z dodatkowymi warunkami"""
         print("\n=== ĆWICZENIE 15: Top 2 najlepiej płatnych w każdym dziale z dodatkowymi warunkami ===\n")
         
+        window_spec = Window.partitionBy('department').orderBy(col('salary').desc())
+        result_df = self.employees_df.withColumn('rank', row_number().over(window_spec)) \
+                                    .filter(col('rank') <= 2)
+        result_df.show()
+
+        print('tylko name i rank')
+
+        window_spec = Window.partitionBy('department').orderBy(col('salary').desc())
+        result_df = self.employees_df.select('name', row_number().over(window_spec).filter(col('rank') <= 2)
+        result_df.show()
         # TODO: Napisz rozwiązanie tutaj
         
         pass
@@ -367,10 +400,12 @@ class AdvancedPySparkExercises:
         print("🎯 EKSPERT (11-13): Kompleksowe JOIN'y, pivot, kohorty")
         print("👑 MISTRZ (14-15): Zaawansowana analityka\n")
         
+        #self.exercise_1, self.exercise_2, self.exercise_3, self.exercise_3a, self.exercise_4, self.exercise_5, self.exercise_5a,
+        #    self.exercise_6, self.exercise_7, self.exercise_7a, self.exercise_8, self.exercise_9, self.exercise_9a, self.exercise_10,
+        #    self.exercise_11, self.exercise_11a, self.exercise_12, self.exercise_13, self.exercise_14, 
+
         exercises = [
-            self.exercise_1, self.exercise_2, self.exercise_3, self.exercise_3a, self.exercise_4, self.exercise_5, self.exercise_5a,
-            self.exercise_6, self.exercise_7, self.exercise_7a, self.exercise_8, self.exercise_9, self.exercise_9a, self.exercise_10,
-            self.exercise_11, self.exercise_11a, self.exercise_12, self.exercise_13, self.exercise_14, self.exercise_14a, self.exercise_15
+             self.exercise_14a, self.exercise_15
         ]
         
         for exercise in exercises:
